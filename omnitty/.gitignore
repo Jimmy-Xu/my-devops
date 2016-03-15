@@ -1,0 +1,9 @@
+**/*.o
+**/librote.so*
+**/.depends
+**/*.log
+**/Makefile
+**/config.status
+**/omnitty
+**/rote-config
+**/bin
