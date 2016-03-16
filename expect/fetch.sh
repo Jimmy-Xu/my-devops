@@ -8,14 +8,14 @@ if [ ! -s etc/config ];then
 fi
 
 #check host_list, one list at least
-HOSTLST_CNT=$(ls host | grep -v "template" | wc -l)
+HOSTLST_CNT=$(ls host/*.lst | wc -l)
 if [ ${HOSTLST_CNT} -eq 0 ];then
   echo "please create a host list file in host/ first (see host/example.lst.template)"
   exit 1
 fi
 
 #check cmd file, one list at least
-CMDFILE_CNT=$(ls cmd | grep -v "template" | wc -l)
+CMDFILE_CNT=$(ls cmd/*.exp| wc -l)
 if [ ${CMDFILE_CNT} -eq 0 ];then
   echo "please create a cmd file in cmd/ first (see cmd/example.lst.template)"
   exit 1
@@ -35,19 +35,20 @@ if [ $# -eq 2 ];then
   fi
   #check cmd file
   CMD_FILE="$2.exp"
+  CMD_HANDLER="$2.handler"
   if [ ! -s cmd/${CMD_FILE} ]; then
     echo "cmd file: cmd/$CMD_FILE not found or empty!"
     exit 1
   fi
 else
   # show usage
-  echo -e "\nUsage: ./run.sh <host_list> <cmd>"
+  echo -e "\nUsage: ./fetch.sh <host_list> <cmd>"
   #
   echo -e "\nAvailable host_list:\n--------------------------"
-  ls host | grep -v "\.template" | awk -F"." '{print $1 }'
+  cd ${WORKDIR}/host && ls *.lst | awk -F"." '{print $1 }'
   #
   echo -e "\nAvailable cmd:\n--------------------------"
-  ls cmd | grep -v "\.template" | awk -F"." '{print $1 }'
+  cd ${WORKDIR}/cmd && ls *.exp | awk -F"." '{print $1 }'
   exit 1
 fi
 
@@ -69,7 +70,8 @@ echo ">save host_list and cmd file"
 mkdir -p ${WORKDIR}/log/latest/host ${WORKDIR}/log/latest/cmd
 cp host/${HOST_FILE} ${WORKDIR}/log/latest/host
 cp cmd/${CMD_FILE} ${WORKDIR}/log/latest/cmd
-echo ">start batch execute"
+[ -s cmd/${CMD_HANDLER} ] && cp cmd/${CMD_HANDLER} ${WORKDIR}/log/latest/cmd
+echo ">start batch fetch"
 while read HOST_IP
 do
 {
@@ -85,3 +87,13 @@ done < host/${HOST_FILE}
 wait
 
 echo "All Done!"
+cat <<EOF
+
+================================================================================
+Please
+  run ./process.sh to process result
+  or
+  run ./startsrv.sh to start a web server, then view raw result in web browser
+================================================================================
+
+EOF

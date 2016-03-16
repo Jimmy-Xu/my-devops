@@ -26,13 +26,13 @@ expect -c "
     set timeout 10
     spawn ssh -o \"StrictHostKeyChecking no\" ${USERNAME}@${IP}
     expect {
-    	\"password:\" {send \"${PASSWORD}\r\";}
+    	\"password:\" {send \"${PASSWORD}\n\";}
     	}
-    send_user \"\rEnter server ${IP}\r\"
+    send_user \"\nEnter server ${IP}\n\"
     ${TASK_LIST}
     expect \"*\]#\"
-    send_user \"\rLeaver server ${IP}\r\"
-    send \"exit\r\"
+    send_user \"\nLeaver server ${IP}\n\"
+    send \"exit\n\"
     expect eof
 "
 echo "Done!"
