@@ -32,13 +32,14 @@ $ ./run.sh all gather_info
 ```
 
 # view result
+
+> 1)view raw result data in `log/latest` dir
+> 2)run web server view html result
 ```
-//result
-$ ls log/latest/*.log
+//start simple web server
+$ ./startsrv.sh
+  /home/xjimmy/my-devops/expect/log/latest
+  serving at port 8888
 
-//host_list backup
-$ ls log/host
-
-//cmd file backup
-$ ls log/cmd
+//open http://x.x.x.x:8888 to view result
 ```
