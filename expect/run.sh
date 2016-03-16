@@ -65,6 +65,11 @@ cd ${WORKDIR}/log && ln -s ${LOGFILE} latest && cd -
 ############################
 ##          main          ##
 ############################
+echo ">save host_list and cmd file"
+mkdir -p ${WORKDIR}/log/latest/host ${WORKDIR}/log/latest/cmd
+cp host/${HOST_FILE} ${WORKDIR}/log/latest/host
+cp cmd/${CMD_FILE} ${WORKDIR}/log/latest/cmd
+echo ">start batch execute"
 while read HOST_IP
 do
 {
