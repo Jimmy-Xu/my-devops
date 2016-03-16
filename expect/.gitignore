@@ -1,3 +1,4 @@
+cmd/*.exp
+host/*.lst
 etc/config
-etc/hosts
-log
+log/

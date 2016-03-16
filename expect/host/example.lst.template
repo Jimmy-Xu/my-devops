@@ -1,0 +1,4 @@
+# create a host_list file(extension should be .lst), each line is an ip of host.
+x.x.x.x
+x.x.x.x
+x.x.x.x
