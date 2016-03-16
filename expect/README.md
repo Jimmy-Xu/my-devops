@@ -159,4 +159,4 @@ $ ./startsrv.sh
 
 //open http://host_ip:8888 in web browser to view result
 ```
-![](gui.png)
+![](assets/webgui.png)

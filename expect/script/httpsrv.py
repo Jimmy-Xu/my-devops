@@ -3,6 +3,9 @@ import urlparse
 
 PORT = 8888
 
+class MyTCPServer(SocketServer.TCPServer):
+    allow_reuse_address = True
+
 class MyHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
    def do_GET(self):
        # Parse query data & params to find out what was passed
@@ -29,7 +32,7 @@ class MyHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
 Handler = MyHandler
 
-httpd = SocketServer.TCPServer(("", PORT), Handler)
+httpd = MyTCPServer(("0.0.0.0", PORT), Handler)
 
 print "serving at port", PORT
 httpd.serve_forever()
