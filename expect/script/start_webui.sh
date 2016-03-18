@@ -1,10 +1,10 @@
 #/bin/bash
 
-LOG_DIR=$1
-[ "${LOG_DIR}" == "" ] && LOG_DIR="latest"
+LOG_FULLPATH=$1
+[ "${LOG_FULLPATH}" == "" ] && LOG_FULLPATH="latest"
 
-WORKDIR=$(cd `dirname $0`; pwd)
-cd ${WORKDIR}/log/${LOG_DIR}
+WORKDIR=$(cd `dirname $0`; cd ..; pwd)
+cd ${LOG_FULLPATH}
 
 pwd
 
@@ -15,8 +15,8 @@ do
     LINE=${LINE}$(echo -e "<li><a href='javascript:;' class='move'>$i</a></li>\r\n")
 done
 
-cp ${WORKDIR}/script/jquery.min.js ${WORKDIR}/log/${LOG_DIR}
-cp ${WORKDIR}/assets/fixedsys.ttf ${WORKDIR}/log/${LOG_DIR}
+cp ${WORKDIR}/webui/js/jquery.min.js ${LOG_FULLPATH}
+cp ${WORKDIR}/webui/assets/fixedsys.ttf ${LOG_FULLPATH}
 
 cat > list.html <<EOF
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN"><html>

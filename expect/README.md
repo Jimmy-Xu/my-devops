@@ -1,162 +1,123 @@
 <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
-- [prepare](#prepare)
-	- [create config](#create-config)
-	- [create host_list file](#create-hostlist-file)
-	- [create cmd file](#create-cmd-file)
-- [batch run cmd](#batch-run-cmd)
-- [view result](#view-result)
+- [quick start](#quick-start)
+	- [prepare](#prepare)
+		- [create config](#create-config)
+		- [create host_list file](#create-hostlist-file)
+	- [use run.sh](#use-runsh)
+		- [show usage](#show-usage)
+		- [execute command](#execute-command)
+		- [process result](#process-result)
+		- [view raw result in web browser](#view-raw-result-in-web-browser)
 - [extend example](#extend-example)
-	- [add config file](#add-config-file)
-	- [create host_list file](#create-hostlist-file)
 	- [add cmd file](#add-cmd-file)
 	- [add cmd handler](#add-cmd-handler)
-	- [start batch execute](#start-batch-execute)
-	- [process result](#process-result)
-	- [view raw result](#view-raw-result)
+	- [use new cmd](#use-new-cmd)
 
 <!-- /TOC -->
 
-# prepare
+# quick start
 
-## create config
+## prepare
+
+### create config
 
 > create etc/config, set ssh account in it
+```
+//for example
+$ cat etc/config
+	REMOTE_USERNAME="root"
+	REMOTE_PASSWORD="aaa123aa"
+	REMOTE_PROMPT="*]#"
+```
 
-## create host_list file
+### create host_list file
 
 > create a host_list in host/, see host/example.lst.template
-
-## create cmd file
-
-> create a cmd file in cmd/, see cmd/example.exp.template
-
-# batch run cmd
 ```
-//show usage
-$ ./fetch.sh
-  Usage: ./fetch.sh <host_list> <cmd>
-
-  Available host_list:
-  --------------------------
-  all
-  test
-
-  Available cmd:
-  --------------------------
-  gather_info
-
-//run
-$ ./fetch.sh all gather_info
+//for example
+$ cat host/test.lst
+	192.168.1.2
+	192.168.1.3
 ```
 
-# view result
+## use run.sh
 
-> 1)view raw result data in `log/latest` dir
-> 2)run web server view html result
+### show usage
+```
+$ ./run.sh
+
+	====================================================================================
+	usage: ./run.sh <action> [option]
+	------------------------------------------------------------------------------------
+	<action>:
+	  exec    <host_list> <cmd_dir>             # batch execute command
+	  process <host_list> <cmd_dir> <log_dir>   # process result
+	  web     <host_list> <cmd_dir> <log_dir>   # start a web server to view raw result
+	====================================================================================
+
+	Available <host_list>:
+	------------------------------------------------------------------------------------
+	test	(   2 hosts )
+	all	(  17 hosts )
+
+	Available <cmd_dir>:
+	------------------------------------------------------------------------------------
+	checkdns/  checkimaged/  checknetwork/	gather_info/
+```
+
+### execute command
+```
+$ ./run.sh exec test checkdns
+```
+
+### process result
+```
+//for example
+$ ./run.sh process
+or
+$ ./run.sh process test checkdns 20160319T002355
+	------------------------------------ result ----------------------------------
+	Enter server 192.168.1.2|nameserver 8.8.8.8
+	Enter server 192.168.1.3|nameserver 8.8.8.8
+	------------------------------------------------------------------------------
+```
+
+### view raw result in web browser
 
 ```
-//start simple web server
-$ ./startsrv.sh
-  /home/xjimmy/my-devops/expect/log/latest
-  serving at port 8888
+$ ./run.sh web
+or
+$ ./run.sh web test checkdns 20160319T002355
+	serving at port 8888
 
-//open http://x.x.x.x:8888 to view result
+// open http://<host_ip>:8888 in web browser
 ```
+![](webui/assets/webgui.png)
+
 
 # extend example
 > check all host's dns server
 
-## add config file
-```
-$ cat etc/config
-USERNAME="root"
-PASSWORD="xxxxxxxxx"
-```
-
-## create host_list file
-```
-//create new host_list
-$ cat host/all.lst
-  x.236.114.4
-  x.236.114.5
-  x.236.114.6
-  x.236.114.7
-```
-
 ## add cmd file
 ```
-//create new cmd file
-$ cat cmd/checkdns.exp
+//create new cmd file, filename should always be 'cmd.exp'
+$ cat cmd/checkdns/cmd.exp
   expect "*\]#"
   send "cat /etc/resolv.conf\n"
 ```
 
 ## add cmd handler
 
-> this file is required for process.sh
-
 ```
-//create new handler for process result
-$ cat cmd/checkdns.handler
+//create new handler for process result, filename should always be 'handler.sh'
+$ cat cmd/checkdns/handler.sh
   #!/bin/bash
   # this script is used for process result(process.sh will invoke this file)
   LOG_FILE="$1"
   cat ${LOG_FILE} | grep -E "(Enter|nameserver)" |  tr '\n' '|' | sed -e 's/|$/\n/'
 ```
 
-## start batch execute
-```
-//show usage
-./fetch.sh
-  Usage: ./fetch.sh <host_list> <cmd>
+## use new cmd
 
-  Available host_list:
-  --------------------------
-  all
-
-  Available cmd:
-  --------------------------
-  checkdns
-
-
-//start execute
-$ ./fetch.sh all checkdns
-  =================================================
-  gather server info: x.236.114.15
-  =================================================
-  ...
-  All Done!
-  ================================================================================
-  Please
-    run ./process.sh to process result
-    or
-    run ./startsrv.sh to start a web server, then view raw result in web browser
-  ================================================================================
-```
-
-## process result
-```
-$ ./process.sh
-  Enter server x.236.114.4|nameserver 8.8.8.8
-  Enter server x.236.114.5|nameserver 8.8.8.8
-  Enter server x.236.114.6|nameserver 8.8.8.8
-  Enter server x.236.114.7|nameserver 8.8.8.8
-  Enter server x.236.114.8|nameserver 8.8.8.8
-  Enter server x.236.114.9|nameserver 8.8.8.8
-```
-
-## view raw result
-
-> raw result is under `log/latest` dir
-
-```
-//start web server
-$ ./startsrv.sh
-  /home/xjimmy/my-devops/expect/log/latest
-  serving at port 8888
-  ...
-
-//open http://host_ip:8888 in web browser to view result
-```
-![](assets/webgui.png)
+> run.sh will autoscan all cmd in cmd dir, so then new cmd will occur in 'Available <cmd_dir>' list

@@ -1,3 +1,4 @@
 #config filename must be "config"
 USERNAME="xxx"
 PASSWORD="xxxxxx"
+REMOTE_PROMPT="*]#"
