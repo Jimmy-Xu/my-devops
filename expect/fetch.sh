@@ -70,7 +70,6 @@ echo ">save host_list and cmd file"
 mkdir -p ${WORKDIR}/log/latest/host ${WORKDIR}/log/latest/cmd
 cp host/${HOST_FILE} ${WORKDIR}/log/latest/host
 cp cmd/${CMD_FILE} ${WORKDIR}/log/latest/cmd
-[ -s cmd/${CMD_HANDLER} ] && cp cmd/${CMD_HANDLER} ${WORKDIR}/log/latest/cmd
 echo ">start batch fetch"
 while read HOST_IP
 do
