@@ -1,0 +1,9 @@
+send_user "HOSTNAME\n"
+expect "*\]#"
+send "echo \"HOSTNAME: \$(hostname)\"\n"
+
+expect "*\]#"
+send "echo found imaged - process: \$(ps -ef|grep imaged | grep -v grep)\n"
+
+expect "*\]#"
+send "echo found imaged - file: \$(find / -name imaged | grep -E '(/usr/bin/imaged|image-service/imaged)')\n"

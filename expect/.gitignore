@@ -1,4 +1,3 @@
-cmd/*.exp
 host/*.lst
 etc/config
 log/

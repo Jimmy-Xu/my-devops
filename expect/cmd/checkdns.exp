@@ -1,0 +1,2 @@
+expect "*\]#"
+send "cat /etc/resolv.conf\n"

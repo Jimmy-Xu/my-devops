@@ -1,0 +1,5 @@
+expect "*\]#"
+send "which hwinfo && echo 'hwinfo has already installed' || yum install -y http://li.nux.ro/download/nux/dextop/el7/x86_64/hwinfo-20.2-5.3.x86_64.rpm  http://li.nux.ro/download/nux/dextop/el7/x86_64/libx86emu-1.1-2.1.x86_64.rpm\n"
+
+expect "*\]#"
+send "curl https://raw.githubusercontent.com/Jimmy-Xu/my-devops/master/gather_server_info/server_info.sh | bash\n"

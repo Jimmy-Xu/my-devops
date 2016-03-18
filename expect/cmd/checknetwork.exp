@@ -1,0 +1,15 @@
+send_user "HOSTNAME\n"
+expect "*\]#"
+send "echo \"HOSTNAME: \$(hostname)\"\n"
+
+send_user "NETWORK-SHORT\n"
+expect "*\]#"
+send "hwinfo --short --network\n"
+
+send_user "NETCARD-SHORT\n"
+expect "*\]#"
+send "hwinfo --short --netcard\n"
+
+send_user "NETCARD-DETAIL\n"
+expect "*\]#"
+send "hwinfo --short --netcard | grep -v 'network:' | awk '{print \$1}' | xargs -i sudo ethtool {}\n"
