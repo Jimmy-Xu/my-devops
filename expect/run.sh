@@ -1,5 +1,9 @@
 #/bin/bash
 
+#number of concurrent tasks(can be modified)
+MAX_NPROC=20
+DELAY_SEC=1
+
 WORKDIR=$(cd `dirname $0`; pwd)
 cd ${WORKDIR}
 HOST_FILE=""
@@ -103,6 +107,9 @@ EOF
 
 
 function do_exec() {
+  START_TS=$(date +"%s")
+  START_TIME=$(date +"%F %T")
+
   # generate timestamp of log
   TS=$(date +"%Y%m%dT%H%M%S")
   LOG_FULLPATH=${WORKDIR}/log/${HOST_FILE}@${CMD_DIR}/${TS}
@@ -115,32 +122,67 @@ LOG_FULLPATH : ${LOG_FULLPATH}
 ==============================================================================
 EOF
 
-  # ensure log path
+  # ensure output  dir
   mkdir -p ${LOG_FULLPATH}
 
+  # save current host_list and cmd file
   echo ">save host_list and cmd file"
   mkdir -p ${LOG_FULLPATH}/snap
   cp cmd/${CMD_DIR}/* ${LOG_FULLPATH}/snap
 
+  # create log/latest
   echo ">create symlink 'log/latest'"
   ls log/latest >/dev/null 2>&1
   [ $? -eq 0 ] && rm -rf log/latest
   cd ${WORKDIR}/log && ln -s ${HOST_FILE}@${CMD_DIR}/${TS} latest && cd -
 
+  # prepare pipe(for control concurrent tasks)
+  Pfifo="/tmp/$$.fifo"
+  mkfifo $Pfifo
+  exec 6<>$Pfifo #file descriptor(fd could be 0-9, except 0,1,2,5)
+  rm -f $Pfifo
+  for((i=1; i<=$MAX_NPROC; i++));
+  do
+    #write blank line as token
+    echo
+  done >&6 #fd6
+
+  # start exec task
   echo ">start batch fetch"
+  JOB_TOTAL=0
+  JOB_SUCCESS=0
+  JOB_FAIL=0
   while read CURRENT_IP
   do
-  {
     #skip comment line and blank line
     echo ${CURRENT_IP} | grep -E "(^#|^$|^[[:space:]]$)" >/dev/null 2>&1
     [ $? -eq 0 ] && continue
-    #process
-    EXEC_CMD="${WORKDIR}/script/executor.sh ${HOST_FILE} ${CMD_DIR} ${CURRENT_IP} ${TS} "
-    echo "${EXEC_CMD}"
-    eval "${EXEC_CMD}"
-  }&
+
+    JOB_TOTAL=$((JOB_TOTAL+1))
+    #fetch token from pipe(block here if there is no token in pipe)
+    read -u6 #fd6
+    {
+      #exec job
+      EXEC_CMD="${WORKDIR}/script/executor.sh ${HOST_FILE} ${CMD_DIR} ${CURRENT_IP} ${TS} "
+      echo "${EXEC_CMD}"
+      eval "${EXEC_CMD}" && {
+        echo "Job finished: [${EXEC_CMD}]"
+        JOB_SUCCESS=$((JOB_SUCCESS+1))
+      } || {
+        echo "Job failed: [${EXEC_CMD}]"
+        JOB_FAIL=$((JOB_FAIL+1))
+      }
+      #delay
+      echo "delay '${DELAY_SEC}' seconds"
+      sleep ${DELAY_SEC}
+      #give back token to pipe
+      echo >&6 #fd6
+    }&
   done < host/${HOST_FILE}.lst
+  #wait for all task finish
   wait
+  #delete file descriptor
+  exec 6>&- #fd6
 
   cat <<EOF
 
@@ -156,6 +198,24 @@ To view raw result in web browser, please run:
   ./run.sh web ${HOST_FILE} ${CMD_DIR} ${TS}
 ================================================================================
 
+EOF
+
+END_TS=$(date +"%s")
+END_TIME=$(date +"%F %T")
+cat <<EOF
+############### Summary ###############
+HOST LIST : host/${HOST_FILE}.lst
+CMD FILE  : cmd/${CMD_DIR}/cmd.exp
+---------------------------------------
+MAX_NPROC : ${MAX_NPROC}
+START_TIME: ${START_TIME}
+END_TIME  : ${END_TIME}
+DURATION  : $((END_TS - START_TS)) (seconds)
+---------------------------------------
+JOB_TOTAL : ${JOB_TOTAL}
+  SUCCESS   : ${JOB_SUCCESS}
+  FAIL      : ${JOB_FAIL}
+#######################################
 EOF
 }
 
@@ -199,11 +259,9 @@ EOF
   esac
 }
 
-
 #############################################################
 #                        main                               #
 #############################################################
-
 ###### check config file ######
 check_config
 
@@ -225,3 +283,7 @@ case "$1" in
 esac
 
 echo -e "\nAll Done!\n"
+
+
+# TOTO
+#get all netcard and ip

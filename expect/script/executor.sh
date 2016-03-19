@@ -39,4 +39,4 @@ expect -c "
     send \"exit\n\"
     expect eof
 "
-echo "Done!"
+echo "executor.sh done!"
