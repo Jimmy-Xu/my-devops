@@ -1,13 +1,12 @@
 #/bin/bash
 
-#number of concurrent tasks(can be modified)
-MAX_NPROC=20
-DELAY_SEC=1
-
 WORKDIR=$(cd `dirname $0`; pwd)
 cd ${WORKDIR}
 HOST_FILE=""
 CMD_DIR=""
+
+#load MAX_NPROC and DELAY_SEC(# limit number of concurrent tasks
+source etc/config
 
 #############################################################
 #                       function                            #
@@ -208,6 +207,8 @@ HOST LIST : host/${HOST_FILE}.lst
 CMD FILE  : cmd/${CMD_DIR}/cmd.exp
 ---------------------------------------
 MAX_NPROC : ${MAX_NPROC}
+DELAY_SEC : ${DELAY_SEC}
+---------------------------------------
 START_TIME: ${START_TIME}
 END_TIME  : ${END_TIME}
 DURATION  : $((END_TS - START_TS)) (seconds)

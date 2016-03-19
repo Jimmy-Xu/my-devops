@@ -1,4 +1,10 @@
-#config filename must be "config"
+## config filename must be "config"
+
+# for executor.sh
 USERNAME="xxx"
 PASSWORD="xxxxxx"
 REMOTE_PROMPT="*]#"
+
+#for run.sh
+MAX_NPROC=20
+DELAY_SEC=1

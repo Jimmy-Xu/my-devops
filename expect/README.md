@@ -1,5 +1,9 @@
+execute job on multiple remote hosts, view the result friendly
+===========================================================
+
 <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
+- [feature](#feature)
 - [quick start](#quick-start)
 	- [prepare](#prepare)
 		- [create config](#create-config)
@@ -15,6 +19,14 @@
 	- [use new cmd](#use-new-cmd)
 
 <!-- /TOC -->
+# feature
+
+- batch execute job, store log to local
+- view result
+	- process result format
+	- view raw result in web ui
+
+
 
 # quick start
 
@@ -23,17 +35,26 @@
 ### create config
 
 > create etc/config, set ssh account in it
+
 ```
 //for example
 $ cat etc/config
+	# for executor.sh
 	REMOTE_USERNAME="root"
 	REMOTE_PASSWORD="aaa123aa"
 	REMOTE_PROMPT="*]#"
+	#for run.sh
+	MAX_NPROC=20
+	DELAY_SEC=1
+
+// variable start with `REMOTE_` is for ssh to remote host
+// variable `MAX_NPROC` and `DELAY_SEC` is for limit concurrent task
 ```
 
 ### create host_list file
 
 > create a host_list in host/, see host/example.lst.template
+
 ```
 //for example
 $ cat host/test.lst
