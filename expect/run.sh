@@ -104,6 +104,24 @@ EOF
   exit 1
 }
 
+function inc_job_result(){
+  echo "[inc_job_result] inc $1 to ${Pfifo}.$1"
+  case $1 in
+    success)
+      read -u7 CNT
+      CNT=$((CNT+1))
+      echo ${CNT} >&7
+      ;;
+    fail)
+      read -u8 CNT
+      CNT=$((CNT+1))
+      echo ${CNT} >&8
+      ;;
+    *)
+      echo "unknow job result"
+      exit 1
+  esac
+}
 
 function do_exec() {
   START_TS=$(date +"%s")
@@ -137,20 +155,28 @@ EOF
 
   # prepare pipe(for control concurrent tasks)
   Pfifo="/tmp/$$.fifo"
-  mkfifo $Pfifo
+  mkfifo $Pfifo $Pfifo.success $Pfifo.fail
+  # fd6: limit concurrent
   exec 6<>$Pfifo #file descriptor(fd could be 0-9, except 0,1,2,5)
-  rm -f $Pfifo
+  # fd7: success counter
+  exec 7<>$Pfifo.success
+  # fd8: fail counter
+  exec 8<>$Pfifo.fail
+  rm -f $Pfifo $Pfifo.success $Pfifo.fail
+
+  #init fd6, fd7, fd8
   for((i=1; i<=$MAX_NPROC; i++));
-  do
-    #write blank line as token
+  do #write blank line as token
     echo
   done >&6 #fd6
+  #init sucess counter
+  echo 0 >&7
+  #init fail counter
+  echo 0 >&8
 
   # start exec task
   echo ">start batch fetch"
   JOB_TOTAL=0
-  JOB_SUCCESS=0
-  JOB_FAIL=0
   while read CURRENT_IP
   do
     #skip comment line and blank line
@@ -166,10 +192,10 @@ EOF
       echo "${EXEC_CMD}"
       eval "${EXEC_CMD}" && {
         echo "Job finished: [${EXEC_CMD}]"
-        JOB_SUCCESS=$((JOB_SUCCESS+1))
+        inc_job_result "success"
       } || {
         echo "Job failed: [${EXEC_CMD}]"
-        JOB_FAIL=$((JOB_FAIL+1))
+        inc_job_result "fail"
       }
       #delay
       echo "delay '${DELAY_SEC}' seconds"
@@ -180,8 +206,15 @@ EOF
   done < host/${HOST_FILE}.lst
   #wait for all task finish
   wait
+
+  # #read counter
+  read -u7 JOB_SUCCESS
+  read -u8 JOB_FAIL
+
   #delete file descriptor
   exec 6>&- #fd6
+  exec 7>&-
+  exec 8>&-
 
   cat <<EOF
 
@@ -213,9 +246,9 @@ START_TIME: ${START_TIME}
 END_TIME  : ${END_TIME}
 DURATION  : $((END_TS - START_TS)) (seconds)
 ---------------------------------------
-JOB_TOTAL : ${JOB_TOTAL}
-  SUCCESS   : ${JOB_SUCCESS}
-  FAIL      : ${JOB_FAIL}
+JOB_TOTAL(HOSTS) : ${JOB_TOTAL}
+  SUCCESS : ${JOB_SUCCESS}
+  FAIL    : ${JOB_FAIL}
 #######################################
 EOF
 }

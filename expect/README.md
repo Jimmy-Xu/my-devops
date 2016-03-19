@@ -27,6 +27,10 @@ execute job on multiple remote hosts, view the result friendly
 	- view raw result in web ui
 
 
+**web ui**
+
+![](webui/assets/webgui.png)
+
 
 # quick start
 
@@ -90,6 +94,36 @@ $ ./run.sh
 ### execute command
 ```
 $ ./run.sh exec test checkdns
+	...
+	================================================================================
+	To process result, please run:
+	  ./run.sh process                                 # always process 'log/latest'
+	  or
+	  ./run.sh process test checkdns 20160319T120804
+
+	To view raw result in web browser, please run:
+	  ./run.sh web
+	  or
+	  ./run.sh web test checkdns 20160319T120804
+	================================================================================
+
+	############### Summary ###############
+	HOST LIST : host/test.lst
+	CMD FILE  : cmd/checkdns/cmd.exp
+	---------------------------------------
+	MAX_NPROC : 20
+	DELAY_SEC : 1
+	---------------------------------------
+	START_TIME: 2016-03-19 12:08:04
+	END_TIME  : 2016-03-19 12:08:08
+	DURATION  : 4 (seconds)
+	---------------------------------------
+	JOB_TOTAL : 2
+	  SUCCESS   : 2
+	  FAIL      : 0
+	#######################################
+
+	All Done!
 ```
 
 ### process result
@@ -114,7 +148,6 @@ $ ./run.sh web test checkdns 20160319T002355
 
 // open http://<host_ip>:8888 in web browser
 ```
-![](webui/assets/webgui.png)
 
 
 # extend example
