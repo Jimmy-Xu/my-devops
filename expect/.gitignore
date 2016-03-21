@@ -1,3 +1,4 @@
 host/*.lst
 etc/config
 log/
+key/*.pem

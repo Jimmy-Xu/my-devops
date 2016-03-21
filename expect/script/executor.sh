@@ -23,20 +23,42 @@ exec 2> >(tee -a ${LOG_FILE} >&2)
 [ -s cmd/${CMD_DIR}/cmd.exp ] && TASK_LIST=$(cat cmd/${CMD_DIR}/cmd.exp | grep -vE "(^#|^$|^[[:space:]]$)")
 
 ############ main ############
-echo -e "\n================================================="
-echo "gather server info: $IP"
-echo "================================================="
-expect -c "
-    set timeout 10
-    spawn ssh -o \"StrictHostKeyChecking no\" ${REMOTE_USERNAME}@${IP}
-    expect {
-    	\"password:\" {send \"${REMOTE_PASSWORD}\n\";}
-    	}
-    send_user \"\nEnter server ${IP}\n\"
-    ${TASK_LIST}
-    expect \"${REMOTE_PROMPT}\"
-    send_user \"\nLeaver server ${IP}\n\"
-    send \"exit\n\"
-    expect eof
-"
-echo "executor.sh done!"
+if [ "${JUMPER_ENABLED}" != "true" ];then
+
+  echo -e "\n================================================="
+  echo "gather server info(without jumper): $IP"
+  echo "================================================="
+  expect -c "
+      set timeout 10
+      spawn ssh -o \"StrictHostKeyChecking no\" ${REMOTE_USERNAME}@${IP}
+      expect {
+      	\"password:\" {send \"${REMOTE_PASSWORD}\n\";}
+      	}
+      send_user \"\nEnter server ${IP}\n\"
+      ${TASK_LIST}
+      expect \"${REMOTE_PROMPT}\"
+      send_user \"\nLeaver server ${IP}\n\"
+      send \"exit\n\"
+      expect eof
+  "
+else
+  echo -e "\n================================================="
+  echo "gather server info(from jumper:${JUMPER_IP}): $IP"
+  echo "================================================="
+  expect -c "
+      set timeout 10
+      send_user \"\nEnter jumper ${JUMPER_IP}\n\"
+      spawn ssh -i ${JUMPER_KEY} -o \"StrictHostKeyChecking no\" ${JUMPER_USERNAME}@${JUMPER_IP}
+      expect \"${JUMPER_PROMPT}\"
+      send \"ssh ${REMOTE_USERNAME}@${IP}\n\"
+      expect {
+      	\"password:\" {send \"${REMOTE_PASSWORD}\n\";}
+      	}
+      send_user \"\nEnter server ${IP}\n\"
+      ${TASK_LIST}
+      expect \"${REMOTE_PROMPT}\"
+      send_user \"\nLeaver server ${IP}\n\"
+      send \"exit\n\"
+      expect eof
+  "
+fi

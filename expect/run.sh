@@ -2,8 +2,13 @@
 
 WORKDIR=$(cd `dirname $0`; pwd)
 cd ${WORKDIR}
+
 HOST_FILE=""
 CMD_DIR=""
+TMP_DIR="/tmp/expect"
+mkdir -p ${TMP_DIR}
+FILE_SUCCESS="${TMP_DIR}/counter.success"
+FILE_FAIL="${TMP_DIR}/counter.fail"
 
 #load MAX_NPROC and DELAY_SEC(# limit number of concurrent tasks
 source etc/config
@@ -30,6 +35,15 @@ function check_config() {
   if [ ${CMDFILE_CNT} -eq 0 ];then
     echo "please create a cmd directory in cmd/ first"
     exit 1
+  fi
+}
+
+function check_jumper(){
+  if [ "${JUMPER_ENABLED}" == "true" ];then
+    if [ ! -s ${JUMPER_KEY} ];then
+      echo "jumper is enabled, but '${JUMPER_KEY}' doesn't exist"
+      exit 1
+    fi
   fi
 }
 
@@ -105,17 +119,22 @@ EOF
 }
 
 function inc_job_result(){
-  echo "[inc_job_result] inc $1 to ${Pfifo}.$1"
   case $1 in
     success)
-      read -u7 CNT
-      CNT=$((CNT+1))
-      echo ${CNT} >&7
+      read -u7
+      CNT_SUCESS=$(cat ${FILE_SUCCESS})
+      CNT_SUCESS=$((CNT_SUCESS+1))
+      echo ${CNT_SUCESS} > ${FILE_SUCCESS}
+      echo "[ inc_job_result : success ] [$2] ${CNT_SUCESS}/${TOTAL}"
+      echo >&7
       ;;
     fail)
-      read -u8 CNT
-      CNT=$((CNT+1))
-      echo ${CNT} >&8
+      read -u8
+      CNT_FAIL=$(cat ${FILE_FAIL})
+      CNT_FAIL=$((CNT_FAIL+1))
+      echo ${CNT_FAIL} > ${FILE_FAIL}
+      echo "[ inc_job_result : fail ] [$2] ${CNT_FAIL}/${TOTAL}"
+      echo >&8
       ;;
     *)
       echo "unknow job result"
@@ -154,26 +173,32 @@ EOF
   cd ${WORKDIR}/log && ln -s ${HOST_FILE}@${CMD_DIR}/${TS} latest && cd -
 
   # prepare pipe(for control concurrent tasks)
-  Pfifo="/tmp/$$.fifo"
+  Pfifo="${TMP_DIR}/$$.fifo"
   mkfifo $Pfifo $Pfifo.success $Pfifo.fail
+
   # fd6: limit concurrent
   exec 6<>$Pfifo #file descriptor(fd could be 0-9, except 0,1,2,5)
-  # fd7: success counter
+
+  # fd7: locker to write ${FILE_SUCCESS}
   exec 7<>$Pfifo.success
-  # fd8: fail counter
+
+  # fd8: locker to write ${FILE_FAIL}
   exec 8<>$Pfifo.fail
+
   rm -f $Pfifo $Pfifo.success $Pfifo.fail
 
   #init fd6, fd7, fd8
+  echo >&7
+  echo >&8
   for((i=1; i<=$MAX_NPROC; i++));
   do #write blank line as token
     echo
   done >&6 #fd6
-  #init sucess counter
-  echo 0 >&7
-  #init fail counter
-  echo 0 >&8
 
+  #init sucess/fail counter
+  echo -n 0 > ${FILE_SUCCESS}
+  echo -n 0 > ${FILE_FAIL}
+  TOTAL=$(grep -vE "(^#|^$|^[[:space:]]$)" host/${HOST_FILE}.lst 2>/dev/null | wc -l)
   # start exec task
   echo ">start batch fetch"
   JOB_TOTAL=0
@@ -189,16 +214,17 @@ EOF
     {
       #exec job
       EXEC_CMD="${WORKDIR}/script/executor.sh ${HOST_FILE} ${CMD_DIR} ${CURRENT_IP} ${TS} "
-      echo "${EXEC_CMD}"
+      #echo "${EXEC_CMD}"
+      echo "start execute job: [ ${HOST_FILE} ${CMD_DIR} ${CURRENT_IP} ]"
       eval "${EXEC_CMD}" && {
-        echo "Job finished: [${EXEC_CMD}]"
-        inc_job_result "success"
+        #echo "Job finished: [${EXEC_CMD}]"
+        inc_job_result "success" "${HOST_FILE} ${CMD_DIR} ${CURRENT_IP}"
       } || {
-        echo "Job failed: [${EXEC_CMD}]"
-        inc_job_result "fail"
+        #echo "Job failed: [${EXEC_CMD}]"
+        inc_job_result "fail" "${HOST_FILE} ${CMD_DIR} ${CURRENT_IP}"
       }
       #delay
-      echo "delay '${DELAY_SEC}' seconds"
+      #echo "delay '${DELAY_SEC}' seconds"
       sleep ${DELAY_SEC}
       #give back token to pipe
       echo >&6 #fd6
@@ -207,14 +233,17 @@ EOF
   #wait for all task finish
   wait
 
-  # #read counter
-  read -u7 JOB_SUCCESS
-  read -u8 JOB_FAIL
+  #read counter
+  JOB_SUCCESS=$(cat ${FILE_SUCCESS})
+  JOB_FAIL=$(cat ${FILE_FAIL})
 
   #delete file descriptor
   exec 6>&- #fd6
   exec 7>&-
   exec 8>&-
+
+  rm -f ${FILE_SUCCESS}
+  rm -f ${FILE_FAIL}
 
   cat <<EOF
 
@@ -298,6 +327,7 @@ EOF
 #############################################################
 ###### check config file ######
 check_config
+check_jumper
 
 case "$1" in
   exec)

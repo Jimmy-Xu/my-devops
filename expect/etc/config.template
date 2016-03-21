@@ -4,6 +4,11 @@
 USERNAME="xxx"
 PASSWORD="xxxxxx"
 REMOTE_PROMPT="*]#"
+JUMPER_ENABLED=true
+JUMPER_IP="x.x.x.x"
+JUMPER_USERNAME="ec2-user"
+JUMPER_PROMPT="*]$"
+JUMPER_KEY="key/kp-jumper.pem"
 
 #for run.sh
 MAX_NPROC=20
