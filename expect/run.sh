@@ -73,10 +73,17 @@ function check_argument() {
 }
 
 function check_log(){
-  if [[ $# -eq 4 ]] && [[ -d ${WORKDIR}/log/$2@$3/$4 ]] ;then
-    echo -e "\n>${WORKDIR}/log/$2@$3/$4 is valid\n"
+  if [[ $# -eq 3 ]] && [[ -d ${WORKDIR}/log/$2@$3 ]] ;then
+    echo -e "\n>${WORKDIR}/log/$2@$3 is valid\n"
   else
-    echo -e "\n>ERROR: ${WORKDIR}/log/$2@$3/$4 is invalid\n"
+    cat <<EOF
+
+>ERROR: ${WORKDIR}/log/$2@$3 is invalid
+------------------------------------------------------------------------------------
+Please run the following command first:
+  ./run.sh exec $2 $3
+
+EOF
     show_available $@
   fi
 }
@@ -84,9 +91,9 @@ function check_log(){
 function show_available(){
   case $1 in
     process|web)
-      echo -e "\nAvailable <log_dir> in log/$2@$3:"
+      echo -e "\nAvailable <log_dir> in log/:"
       echo "------------------------------------------------------------------------------------"
-      cd ${WORKDIR}/log/$2@$3/ && ls -d */ | tr -d "/"
+      cd ${WORKDIR}/log/ && ls -d */ | grep -v latest | tr -d "/"
       ;;
     *)
       echo -e "\nAvailable <host_list>:"
@@ -109,9 +116,9 @@ function show_usage(){
 usage: ./run.sh <action> [option]
 ------------------------------------------------------------------------------------
 <action>:
-  exec    <host_list> <cmd_dir>             # batch execute command
-  process <host_list> <cmd_dir> <log_dir>   # process result
-  web     <host_list> <cmd_dir> <log_dir>   # start a web server to view raw result
+  exec    <host_list> <cmd_dir>       # batch execute command
+  process <host_list> <cmd_dir>       # process result
+  web     <host_list> <cmd_dir>       # start a web server to view raw result
 ====================================================================================
 EOF
   show_available
@@ -148,7 +155,10 @@ function do_exec() {
 
   # generate timestamp of log
   TS=$(date +"%Y%m%dT%H%M%S")
-  LOG_FULLPATH=${WORKDIR}/log/${HOST_FILE}@${CMD_DIR}/${TS}
+
+  #LOG_FULLPATH=${WORKDIR}/log/${HOST_FILE}@${CMD_DIR}/${TS}
+  LOG_FULLPATH=${WORKDIR}/log/${HOST_FILE}@${CMD_DIR}   ## change log_dir level
+
   #print var
   cat <<EOF
 ==============================================================================
@@ -170,7 +180,9 @@ EOF
   echo ">create symlink 'log/latest'"
   ls log/latest >/dev/null 2>&1
   [ $? -eq 0 ] && rm -rf log/latest
-  cd ${WORKDIR}/log && ln -s ${HOST_FILE}@${CMD_DIR}/${TS} latest && cd -
+
+  ##cd ${WORKDIR}/log && ln -s ${HOST_FILE}@${CMD_DIR}/${TS} latest && cd -
+  cd ${WORKDIR}/log && ln -s ${HOST_FILE}@${CMD_DIR} latest && cd -  ## change log_dir level
 
   # prepare pipe(for control concurrent tasks)
   Pfifo="${TMP_DIR}/$$.fifo"
@@ -251,12 +263,12 @@ EOF
 To process result, please run:
   ./run.sh process                                 # always process 'log/latest'
   or
-  ./run.sh process ${HOST_FILE} ${CMD_DIR} ${TS}
+  ./run.sh process ${HOST_FILE} ${CMD_DIR}
 
 To view raw result in web browser, please run:
   ./run.sh web
   or
-  ./run.sh web ${HOST_FILE} ${CMD_DIR} ${TS}
+  ./run.sh web ${HOST_FILE} ${CMD_DIR}
 ================================================================================
 
 EOF

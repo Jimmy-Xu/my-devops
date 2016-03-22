@@ -1,13 +1,14 @@
 ## config filename must be "config"
 
 # for executor.sh
+EXPECT_TIMEOUT=30
 USERNAME="xxx"
 PASSWORD="xxxxxx"
-REMOTE_PROMPT="*]#"
+REMOTE_PROMPT="#"
 JUMPER_ENABLED=true
 JUMPER_IP="x.x.x.x"
 JUMPER_USERNAME="ec2-user"
-JUMPER_PROMPT="*]$"
+JUMPER_PROMPT="$"
 JUMPER_KEY="key/kp-jumper.pem"
 
 #for run.sh
