@@ -12,5 +12,5 @@ JUMPER_PROMPT="$"
 JUMPER_KEY="key/kp-jumper.pem"
 
 #for run.sh
-MAX_NPROC=20
+MAX_NPROC=10
 DELAY_SEC=1

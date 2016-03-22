@@ -16,6 +16,7 @@ TS=$4
 LOG_DIR=${WORKDIR}/log/${HOST_FILE}@${CMD_DIR}  ## change log_dir level
 
 mkdir -p ${LOG_DIR}
+[ -f ${LOG_DIR}/${IP}.log ] && rm -rf ${LOG_DIR}/${IP}.log
 LOG_FILE=${LOG_DIR}/${IP}.log
 
 exec > >(tee -a ${LOG_FILE} )
