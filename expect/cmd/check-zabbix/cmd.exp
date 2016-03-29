@@ -1,0 +1,4 @@
+expect "*\]#"
+send "systemctl status zabbix-agent\n"
+expect "*\]#"
+send "/usr/bin/grep -E '(^Server|^Hostname)' /etc/zabbix/zabbix_agentd.conf\n"
