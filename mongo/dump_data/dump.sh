@@ -7,7 +7,7 @@ WORKDIR=$(cd `dirname $0`; pwd)
 cd ${WORKDIR}
 
 ###############################################################################################
-SRC_CONF_FILE="${WORKDIR}/etc/automongobackup"
+SRC_CONF_FILE="${WORKDIR}/etc/automongobackup.template"
 TGT_CONF_FILE="/etc/default/automongobackup"
 #automongobackup repo config
 REPO_NAME="automongobackup"
@@ -78,6 +78,10 @@ function clone_repo(){
   log "${fn_name}" "${REPO_NAME} repo is ready:)"
 }
 
+function send_email() {
+  echo "TODO"
+}
+
 function start_backup() {
   fn_name="start_backup"
   echo
@@ -104,8 +108,9 @@ function start_backup() {
   quit $? "mongodump not found, please install first"
 
   log "${fn_name}" "start execute ${BACKUP_SCRIPT}"
-  source ${BACKUP_SCRIPT}
-  quit $? "automongobackup failed"
+  ${BACKUP_SCRIPT}
+
+  send_email "$?"
 }
 
 ###############################################################################################

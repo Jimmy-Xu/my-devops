@@ -5,14 +5,29 @@ REF: https://github.com/micahwedemeyer/automongobackup
 
 #quickstart
 
-## create etc/config
+## config for automongobackup.sh
+
+### deploy config file
 ```
-$ cat etc/config
-MGO_HOST="127.0.0.1"
-MGO_PORT="27017"
-MGO_BACKUPDIR="$(pwd)/data"
-MGO_REPLICAONSLAVE="no"
-MGO_OPLOG="no"
+$ sudo cp etc/automongobackup.template /etc/default/automongobackup
+```
+
+### for single node mongo
+```
+DBHOST            : "127.0.0.1"
+DBPORT            : "27017"
+BACKUPDIR         : "/home/xjimmy/my-devops/mongo/dump_data/data"
+OPLOG             : "no"
+REPLICAONSLAVE    : "no"
+```
+
+### for mongo cluster
+```
+DBHOST            : "10.1.1.4"
+DBPORT            : "27017"
+BACKUPDIR         : "/opt/mongo_bak/dump_data"
+OPLOG             : "yes"
+REPLICAONSLAVE    : "yes"
 ```
 
 ## start backup
