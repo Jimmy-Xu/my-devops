@@ -14,6 +14,13 @@ SMTP_SERVER
 ```
 
 ## usage
+
+### send mail without attachments
 ```
-python ./zabbix-alert-smtp.py jimmy@xxxxx.sh "title" "content"
+$ python ./zabbix-alert-smtp.py jimmy@xxxxx.sh "title" "content"
+```
+
+### send mail with attachments
+```
+$ python ./zabbix-alert-smtp.py jimmy@xxxxx.sh "title" "body" "file1,file2"
 ```
