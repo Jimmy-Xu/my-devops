@@ -7,7 +7,8 @@ WORKDIR=$(cd `dirname $0`; pwd)
 cd ${WORKDIR}
 
 ###############################################################################################
-CONF_FILE="${WORKDIR}/etc/config"
+SRC_CONF_FILE="${WORKDIR}/etc/automongobackup"
+TGT_CONF_FILE="/etc/default/automongobackup"
 #automongobackup repo config
 REPO_NAME="automongobackup"
 REPO_URL="https://github.com/micahwedemeyer/automongobackup.git"
@@ -31,35 +32,31 @@ function log(){
   echo "[$(date +'%F %T')] - (${module}) : ${log_msg}"
 }
 
-function load_config() {
-  if [ ! -s ${CONF_FILE} ];then
-    quit 1 "Can not find config file ${CONF_FILE}, please create it ,then try again"
+function deploy_config() {
+  fn_name="deploy_config"
+  echo
+  echo "//////////////////////////////${fn_name}//////////////////////////////"
+  if [ ! -s ${TGT_CONF_FILE} ];then
+    cp ${SRC_CONF_FILE} ${TGT_CONF_FILE}
+    log "${fn_name}" "create ${TGT_CONF_FILE} success"
+  else
+    log "${fn_name}" "${TGT_CONF_FILE} already exist"
   fi
 
-  source ${CONF_FILE}
+  log "${fn_name}" "show current config"
 
-  cat <<EOF
-=====================================================================
-MGO_HOST          : "${MGO_HOST}"
-MGO_PORT          : "${MGO_PORT}"
-MGO_BACKUPDIR     : "${MGO_BACKUPDIR}"
-MGO_REPLICAONSLAVE: "${MGO_REPLICAONSLAVE}"
-MGO_OPLOG         : "${MGO_OPLOG}"
-=====================================================================
-EOF
-}
-
-function check_config() {
-  [ "${MGO_HOST}" == "" ] && quit 1 "missing config parameter : ${MGO_HOST}"
-  [ "${MGO_PORT}" == "" ] && quit 1 "missing config parameter : ${MGO_PORT}"
-  [ "${MGO_BACKUPDIR}" == "" ] && quit 1 "missing config parameter : ${MGO_BACKUPDIR}"
-  [ "${MGO_REPLICAONSLAVE}" == "" ] && quit 1 "missing config parameter : ${MGO_REPLICAONSLAVE}"
-  [ "${MGO_OPLOG}" == "" ] && quit 1 "missing config parameter : ${MGO_OPLOG}"
-  log "check_config" "check config pass:)"
+  echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+  echo "+                                ${TGT_CONF_FILE}                             +"
+  echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+  grep -vE "(^#|^$)" ${TGT_CONF_FILE} | awk -F"=" '{printf "%-18s: %s\n",$1,$2}'
+  echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+  echo
 }
 
 function clone_repo(){
   fn_name="clone_repo"
+  echo
+  echo "//////////////////////////////${fn_name}//////////////////////////////"
   cd ${WORKDIR}
   if [ -d ${TARGET_DIR}/.git ];then
     log "${fn_name}" "${TARGET_DIR} found"
@@ -83,16 +80,9 @@ function clone_repo(){
 
 function start_backup() {
   fn_name="start_backup"
-  echo "${fn_name}"
-
+  echo
+  echo "//////////////////////////////${fn_name}//////////////////////////////"
   log "${fn_name}" "update ${BACKUP_SCRIPT}"
-
-  #mongo parameter
-  sed -i "s%^DBHOST=.*%DBHOST=\"${MGO_HOST}\"%g" ${BACKUP_SCRIPT}
-  sed -i "s%^PORT=.*%PORT=\"${MGO_PORT}\"%g" ${BACKUP_SCRIPT}
-  sed -i "s%^BACKUPDIR=.*%BACKUPDIR=\"${MGO_BACKUPDIR}\"%g" ${BACKUP_SCRIPT}
-  sed -i "s%^REPLICAONSLAVE=.*%REPLICAONSLAVE=\"${MGO_REPLICAONSLAVE}\"%g" ${BACKUP_SCRIPT}
-  sed -i "s%^OPLOG=.*%OPLOG=\"${MGO_OPLOG}\"%g" ${BACKUP_SCRIPT}
 
   #avoid mongodump write stderr
   sed -i 's%mongodump --host=.*%& >/dev/null 2>\&1%g' ${BACKUP_SCRIPT}
@@ -101,13 +91,10 @@ function start_backup() {
   sed -i 's%rm -f "$LOGFILE" "$LOGERR".*%[ -f $LOGFILE ] \&\& rm -rf $LOGFILE\n[ -f $LOGERR ] \&\& rm -rf $LOGERR%g' ${BACKUP_SCRIPT}
   sed -i 's%STATUS=1%STATUS=1;exit $STATUS%g' ${BACKUP_SCRIPT}
 
-  log "${fn_name}" "check modify result"
-  echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-  cd ${TARGET_DIR} && (git diff | head -n 100) && cd -
-  echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-
-  log "${fn_name}" "ensure MGO_BACKUPDIR"
-  mkdir -p ${MGO_BACKUPDIR}
+  # log "${fn_name}" "check modify result"
+  # echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+  # cd ${TARGET_DIR} && (git diff | head -n 100) && cd -
+  # echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
 
   log "${fn_name}" "ensure mode of ${BACKUP_SCRIPT}"
   chmod +x ${BACKUP_SCRIPT}
@@ -117,14 +104,12 @@ function start_backup() {
   quit $? "mongodump not found, please install first"
 
   log "${fn_name}" "start execute ${BACKUP_SCRIPT}"
-  bash ${BACKUP_SCRIPT}
+  source ${BACKUP_SCRIPT}
   quit $? "automongobackup failed"
 }
 
 ###############################################################################################
-load_config
-
-check_config
+deploy_config
 
 clone_repo
 
