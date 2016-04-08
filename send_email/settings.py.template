@@ -1,0 +1,12 @@
+## Mail Account
+SENDER_NAME = u'MongoDump Alert'
+SENDER_EMAIL = 'alert@xxxxx.sh'
+
+#AWS IAM user: alert@xxxxx.sh
+SMTP_USERNAME = 'AKIxxxxxxxxxxSQA'
+SMTP_PASSWORD = 'AmC190xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxIS'
+
+# Mail Server
+SMTP_SERVER = 'email-smtp.us-west-2.amazonaws.com'
+SMTP_PORT = 587
+SMTP_SSL_TYPE = 'SMTP_TLS'
